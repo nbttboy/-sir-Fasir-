@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 // --- Icons ---
 const Icons = {
@@ -28,7 +28,13 @@ const Icons = {
   Layers: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
   Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
   Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
-  Play: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+  Play: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+  Tag: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+  List: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
+  Store: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>,
+  Download: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  Clock: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  Printer: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18h12"/></svg>,
 };
 
 // --- Types ---
@@ -75,6 +81,7 @@ interface AuditResult {
   officialVerifyStatus?: 'verified' | 'failed' | 'unknown';
   agentLogs?: string[]; // Restore agent logs
 
+  invoiceType?: string; // New: e.g. "增值税专用发票"
   authenticityStatus: 'pass' | 'fail' | 'warning';
   authenticityReason: string;
 
@@ -88,14 +95,19 @@ interface AuditResult {
   auditTrail: string[];
   createdAt: number;
   user: string;
+
+  // Manual Review
+  reviewStatus?: 'approved' | 'rejected';
 }
 
 interface BatchReport {
   totalAmount: number;
   invoiceCount: number;
-  consecutiveRisks: string[]; // List of invoice numbers
+  duplicateCount: number;
+  duplicates: { invoiceNumber: string, amount: string }[];
+  consecutiveRisks: string[];
   largeAmountRisks: string[];
-  sensitiveAmountRisks: string[]; // e.g. Round numbers
+  sensitiveAmountRisks: string[];
   overallRisk: 'high' | 'medium' | 'low';
 }
 
@@ -247,7 +259,7 @@ const CameraCaptureModal = ({ onClose, onCapture }: { onClose: () => void, onCap
   );
 };
 
-const AuditDetailModal = ({ result, onClose }: { result: AuditResult, onClose: () => void }) => {
+const AuditDetailModal = ({ result, onClose, onUpdate }: { result: AuditResult, onClose: () => void, onUpdate?: (r: AuditResult) => void }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col md:flex-row" onClick={e => e.stopPropagation()}>
@@ -264,64 +276,195 @@ const AuditDetailModal = ({ result, onClose }: { result: AuditResult, onClose: (
         </div>
 
         {/* Right: Details */}
-        <div className="md:w-1/2 p-6 overflow-y-auto">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">审核详情</h3>
-              <p className="text-sm text-gray-500">{new Date(result.createdAt).toLocaleString()}</p>
-            </div>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><Icons.XCircle /></button>
-          </div>
-
-          <div className="space-y-6">
-            {/* Status Cards */}
-            <div className="grid grid-cols-2 gap-3">
-               <div className={`p-3 rounded-lg border ${result.authenticityStatus === 'pass' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                  <div className="text-xs text-gray-500 font-bold mb-1">真伪验证</div>
-                  <div className={`font-bold ${result.authenticityStatus === 'pass' ? 'text-green-700' : 'text-red-700'}`}>
-                    {result.authenticityStatus === 'pass' ? '验证通过' : '验证失败'}
+        <div className="md:w-1/2 p-6 flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto">
+             <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">审核详情</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-sm text-gray-500">{new Date(result.createdAt).toLocaleString()}</p>
+                    {result.reviewStatus && (
+                        <span className={`text-xs px-2 py-0.5 rounded font-bold ${result.reviewStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {result.reviewStatus === 'approved' ? '已接受' : '已驳回'}
+                        </span>
+                    )}
                   </div>
-                  {result.authenticityReason && <div className="text-xs mt-1 opacity-80">{result.authenticityReason}</div>}
-               </div>
-               <div className={`p-3 rounded-lg border ${result.complianceStatus === 'pass' ? 'bg-green-50 border-green-200' : result.complianceStatus === 'warning' ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}>
-                  <div className="text-xs text-gray-500 font-bold mb-1">合规检查</div>
-                  <div className={`font-bold ${result.complianceStatus === 'pass' ? 'text-green-700' : result.complianceStatus === 'warning' ? 'text-amber-700' : 'text-red-700'}`}>
-                    {result.complianceStatus === 'pass' ? '合规' : '异常'}
-                  </div>
-                  {result.complianceReason && <div className="text-xs mt-1 opacity-80">{result.complianceReason}</div>}
-               </div>
-            </div>
-
-            {/* Extracted Data */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.FileText /> 票面信息</h4>
-              <div className="bg-gray-50 p-4 rounded-lg text-sm space-y-2">
-                 <div className="flex justify-between"><span className="text-gray-500">销售方:</span> <span className="font-medium text-right">{result.sellerName}</span></div>
-                 <div className="flex justify-between"><span className="text-gray-500">发票金额:</span> <span className="font-bold text-blue-600">{result.amount}</span></div>
-                 <div className="flex justify-between"><span className="text-gray-500">发票代码:</span> <span className="font-mono">{result.taxData?.invoiceCode || '-'}</span></div>
-                 <div className="flex justify-between"><span className="text-gray-500">发票号码:</span> <span className="font-mono">{result.taxData?.invoiceNumber || '-'}</span></div>
-                 <div className="flex justify-between"><span className="text-gray-500">开票日期:</span> <span>{result.taxData?.date || '-'}</span></div>
-              </div>
-            </div>
-
-            {/* Tax Bureau Logs */}
-            {result.agentLogs && result.agentLogs.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.ShieldCheck /> 国税局查验日志</h4>
-                <div className="bg-slate-900 text-green-400 p-3 rounded-lg font-mono text-xs max-h-40 overflow-y-auto">
-                   {result.agentLogs.map((log, i) => <div key={i} className="mb-1">{log}</div>)}
                 </div>
-              </div>
-            )}
+                <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><Icons.XCircle /></button>
+             </div>
 
-            {/* AI Audit Trail */}
-            <div className="space-y-2">
-               <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.Brain /> AI 分析追踪</h4>
-               <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
-                 {result.auditTrail.map((t, i) => <li key={i}>{t}</li>)}
-               </ul>
-            </div>
+             <div className="space-y-6">
+                {/* Status Cards */}
+                <div className="grid grid-cols-2 gap-3">
+                <div className={`p-3 rounded-lg border ${result.authenticityStatus === 'pass' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="text-xs text-gray-500 font-bold mb-1">真伪验证</div>
+                    <div className={`font-bold ${result.authenticityStatus === 'pass' ? 'text-green-700' : 'text-red-700'}`}>
+                        {result.authenticityStatus === 'pass' ? '验证通过' : '验证失败'}
+                    </div>
+                    {result.authenticityReason && <div className="text-xs mt-1 opacity-80">{result.authenticityReason}</div>}
+                </div>
+                <div className={`p-3 rounded-lg border ${result.complianceStatus === 'pass' ? 'bg-green-50 border-green-200' : result.complianceStatus === 'warning' ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="text-xs text-gray-500 font-bold mb-1">合规检查</div>
+                    <div className={`font-bold ${result.complianceStatus === 'pass' ? 'text-green-700' : result.complianceStatus === 'warning' ? 'text-amber-700' : 'text-red-700'}`}>
+                        {result.complianceStatus === 'pass' ? '合规' : '异常'}
+                    </div>
+                    {result.complianceReason && <div className="text-xs mt-1 opacity-80">{result.complianceReason}</div>}
+                </div>
+                </div>
+
+                {/* Extracted Data */}
+                <div className="space-y-3">
+                <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.FileText /> 票面信息</h4>
+                <div className="bg-gray-50 p-4 rounded-lg text-sm space-y-2">
+                    <div className="flex justify-between"><span className="text-gray-500">发票类型:</span> <span className="font-medium">{result.invoiceType || '通用'}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">销售方:</span> <span className="font-medium text-right">{result.sellerName}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">发票金额:</span> <span className="font-bold text-blue-600">{result.amount}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">发票代码:</span> <span className="font-mono">{result.taxData?.invoiceCode || '-'}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">发票号码:</span> <span className="font-mono">{result.taxData?.invoiceNumber || '-'}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">开票日期:</span> <span>{result.taxData?.date || '-'}</span></div>
+                </div>
+                </div>
+
+                {/* Tax Bureau Logs */}
+                {result.agentLogs && result.agentLogs.length > 0 && (
+                <div className="space-y-2">
+                    <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.ShieldCheck /> 国税局查验日志</h4>
+                    <div className="bg-slate-900 text-green-400 p-3 rounded-lg font-mono text-xs max-h-40 overflow-y-auto">
+                    {result.agentLogs.map((log, i) => <div key={i} className="mb-1">{log}</div>)}
+                    </div>
+                </div>
+                )}
+
+                {/* AI Audit Trail */}
+                <div className="space-y-2">
+                <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.Brain /> AI 分析追踪</h4>
+                <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
+                    {result.auditTrail.map((t, i) => <li key={i}>{t}</li>)}
+                </ul>
+                </div>
+             </div>
           </div>
+          
+          {/* Manual Review Actions */}
+          <div className="pt-6 border-t border-gray-100 flex gap-4 mt-4">
+             <button 
+                onClick={() => {
+                if (onUpdate) onUpdate({ ...result, reviewStatus: 'rejected' });
+                onClose();
+                }}
+                className="flex-1 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors flex justify-center items-center gap-2"
+             >
+                🚫 驳回
+             </button>
+             <button 
+                onClick={() => {
+                if (onUpdate) onUpdate({ ...result, reviewStatus: 'approved' });
+                onClose();
+                }}
+                className="flex-1 py-3 bg-green-50 text-green-600 rounded-xl font-bold hover:bg-green-100 transition-colors flex justify-center items-center gap-2"
+             >
+                ✅ 接受
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ReimbursementModal = ({ selectedItems, onClose }: { selectedItems: AuditResult[], onClose: () => void }) => {
+  const totalAmount = selectedItems.reduce((acc, item) => acc + (parseFloat(item.amount.replace(/[^0-9.]/g, '')) || 0), 0);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="bg-white w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Header - No Print */}
+        <div className="p-4 border-b flex justify-between items-center bg-gray-50 print:hidden">
+           <h3 className="font-bold text-lg text-gray-800">报销单预览</h3>
+           <div className="flex gap-2">
+             <button onClick={handlePrint} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-bold shadow">
+               <Icons.Printer /> 打印 / 保存PDF
+             </button>
+             <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg text-gray-500">
+               <Icons.XCircle />
+             </button>
+           </div>
+        </div>
+
+        {/* Printable Area - A4 Style */}
+        <div className="flex-1 overflow-y-auto bg-gray-100 p-8 print:p-0 print:bg-white print:overflow-visible">
+           <div className="bg-white shadow-lg mx-auto max-w-[210mm] min-h-[297mm] p-[15mm] print:shadow-none print:w-full print:max-w-none print:min-h-0 print:p-0">
+              
+              <div className="text-center mb-8 border-b-2 border-gray-800 pb-4">
+                 <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">费用报销单</h1>
+                 <p className="text-gray-500 text-sm">生成日期: {new Date().toLocaleDateString()}</p>
+              </div>
+
+              <div className="mb-6 flex justify-between text-sm">
+                 <div className="space-y-1">
+                    <p><strong>报销人:</strong> {selectedItems[0]?.user || '员工'}</p>
+                    <p><strong>部门:</strong> 财务部/业务部</p>
+                 </div>
+                 <div className="space-y-1 text-right">
+                    <p><strong>单据编号:</strong> REIM-{Date.now().toString().slice(-8)}</p>
+                    <p><strong>附件张数:</strong> {selectedItems.length} 张</p>
+                 </div>
+              </div>
+
+              <table className="w-full border-collapse border border-gray-300 text-sm mb-8">
+                 <thead>
+                    <tr className="bg-gray-100">
+                       <th className="border border-gray-300 p-2 text-left w-12">序号</th>
+                       <th className="border border-gray-300 p-2 text-left">费用类别</th>
+                       <th className="border border-gray-300 p-2 text-left">销售方名称</th>
+                       <th className="border border-gray-300 p-2 text-left">发票日期</th>
+                       <th className="border border-gray-300 p-2 text-right w-32">金额 (元)</th>
+                       <th className="border border-gray-300 p-2 text-center w-24">风控状态</th>
+                    </tr>
+                 </thead>
+                 <tbody>
+                    {selectedItems.map((item, idx) => (
+                       <tr key={item.id}>
+                          <td className="border border-gray-300 p-2 text-center">{idx + 1}</td>
+                          <td className="border border-gray-300 p-2">{item.invoiceType || '其他'}</td>
+                          <td className="border border-gray-300 p-2 truncate max-w-[200px]">{item.sellerName}</td>
+                          <td className="border border-gray-300 p-2">{item.taxData?.date || '-'}</td>
+                          <td className="border border-gray-300 p-2 text-right font-mono">{item.amount}</td>
+                          <td className="border border-gray-300 p-2 text-center">
+                             {item.authenticityStatus === 'pass' && item.complianceStatus === 'pass' ? '正常' : '异常'}
+                          </td>
+                       </tr>
+                    ))}
+                 </tbody>
+                 <tfoot>
+                    <tr className="bg-gray-50 font-bold">
+                       <td colSpan={4} className="border border-gray-300 p-2 text-right">合计金额:</td>
+                       <td className="border border-gray-300 p-2 text-right text-lg">¥{totalAmount.toFixed(2)}</td>
+                       <td className="border border-gray-300 p-2"></td>
+                    </tr>
+                 </tfoot>
+              </table>
+
+              <div className="grid grid-cols-3 gap-8 mt-16 pt-8 border-t border-gray-300">
+                 <div>
+                    <p className="text-sm font-bold mb-8">报销人签字:</p>
+                    <div className="border-b border-black w-32"></div>
+                 </div>
+                 <div>
+                    <p className="text-sm font-bold mb-8">部门主管签字:</p>
+                    <div className="border-b border-black w-32"></div>
+                 </div>
+                 <div>
+                    <p className="text-sm font-bold mb-8">财务审核:</p>
+                    <div className="border-b border-black w-32"></div>
+                 </div>
+              </div>
+
+           </div>
         </div>
       </div>
     </div>
@@ -411,9 +554,74 @@ const LoginView = ({ onLogin }: { onLogin: (u: User) => void }) => {
   );
 };
 
-const HistoryView = ({ history }: { history: AuditResult[] }) => {
+const HistoryView = ({ history, onUpdate }: { history: AuditResult[], onUpdate: (r: AuditResult) => void }) => {
   const [selected, setSelected] = useState<AuditResult | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'seller' | 'risk' | 'type'>('list');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   
+  // Selection Mode State
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showReimbursementModal, setShowReimbursementModal] = useState(false);
+  
+  // Sort by date descending (Newest first)
+  const sortedHistory = [...history].sort((a, b) => b.createdAt - a.createdAt);
+
+  const filteredHistory = sortedHistory.filter(h => {
+     if (startDate && new Date(h.createdAt) < new Date(startDate)) return false;
+     // End date needs to cover the whole day
+     if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (new Date(h.createdAt) > end) return false;
+     }
+     return true;
+  });
+
+  const toggleSelection = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedIds(newSet);
+  };
+
+  const getSelectedItems = () => {
+    return filteredHistory.filter(item => selectedIds.has(item.id));
+  };
+
+  // Stats
+  const riskCount = filteredHistory.filter(h => h.authenticityStatus !== 'pass' || h.complianceStatus !== 'pass').length;
+  
+  const exportCSV = () => {
+    const headers = "创建时间,发票类型,销售方,发票号码,发票代码,金额,开票日期,真伪状态,合规状态,人工复核,风险原因\n";
+    const rows = filteredHistory.map(item => {
+        return [
+            new Date(item.createdAt).toLocaleString(),
+            item.invoiceType || '普通发票',
+            `"${item.sellerName}"`, // Escape quotes
+            `"${item.taxData?.invoiceNumber || ''}"`, // Force string for IDs
+            `"${item.taxData?.invoiceCode || ''}"`,
+            item.amount,
+            item.taxData?.date || '',
+            item.authenticityStatus === 'pass' ? '通过' : '失败',
+            item.complianceStatus === 'pass' ? '通过' : '失败',
+            item.reviewStatus === 'approved' ? '已接受' : item.reviewStatus === 'rejected' ? '已驳回' : '未处理',
+            `"${(item.authenticityReason + ' ' + item.complianceReason).replace(/"/g, '""')}"`
+        ].join(",");
+    }).join("\n");
+    
+    const blob = new Blob(["\uFEFF" + headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `audit_export_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (history.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">
@@ -423,33 +631,210 @@ const HistoryView = ({ history }: { history: AuditResult[] }) => {
     );
   }
 
-  return (
-    <div className="space-y-6">
-       <h2 className="text-2xl font-bold text-gray-800">审核记录 ({history.length})</h2>
-       <div className="space-y-4">
-         {history.map((item) => (
+  // Grouping Logic
+  const renderContent = () => {
+    // Shared grouped rendering function to avoid code duplication
+    const renderGrouped = (groupByKey: (item: AuditResult) => string, icon: React.ReactNode) => {
+      const grouped = filteredHistory.reduce((acc, item) => {
+        const key = groupByKey(item);
+        if (!acc[key]) acc[key] = { items: [], total: 0, count: 0 };
+        acc[key].items.push(item);
+        acc[key].count++;
+        // Rough parse amount
+        const amt = parseFloat(item.amount.replace(/[^0-9.]/g, '')) || 0;
+        acc[key].total += amt;
+        return acc;
+      }, {} as Record<string, { items: AuditResult[], total: number, count: number }>);
+
+      return (
+        <div className="space-y-6 pb-20">
+          {Object.entries(grouped).map(([groupName, data]) => (
+            <div key={groupName} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+               <div className="bg-gray-50 p-3 flex justify-between items-center border-b border-gray-200">
+                  <div className="font-bold text-gray-800 flex items-center gap-2">
+                    {icon} {groupName} <span className="text-xs font-normal text-gray-500">({data.count} 张)</span>
+                  </div>
+                  <div className="font-bold text-blue-600">¥{data.total.toFixed(2)}</div>
+               </div>
+               <div className="divide-y divide-gray-100">
+                  {data.items.map(item => {
+                    const isRisk = item.authenticityStatus !== 'pass' || item.complianceStatus !== 'pass';
+                    return (
+                        <div key={item.id} onClick={() => setSelected(item)} className="p-3 hover:bg-gray-50 cursor-pointer flex justify-between text-sm items-center relative">
+                        {isSelectionMode && (
+                            <div className="mr-3" onClick={(e) => toggleSelection(item.id, e)}>
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedIds.has(item.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
+                                    {selectedIds.has(item.id) && <div className="w-2 h-2 bg-white rounded-full" />}
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex-1 flex justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="text-gray-400 text-xs w-24">{new Date(item.createdAt).toLocaleTimeString()}</div>
+                                <div>
+                                    <div className="font-medium text-gray-700">{item.sellerName}</div>
+                                    <div className="text-xs text-gray-400">号码: {item.taxData?.invoiceNumber || '-'}</div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="font-mono">{item.amount}</div>
+                                {item.reviewStatus ? (
+                                    <div className={`text-xs font-bold ${item.reviewStatus === 'approved' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {item.reviewStatus === 'approved' ? '已接受' : '已驳回'}
+                                    </div>
+                                ) : (
+                                    <div className={`text-xs ${!isRisk ? 'text-green-500' : 'text-red-500'}`}>
+                                        {!isRisk ? '正常' : '异常'}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        </div>
+                    );
+                  })}
+               </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
+    if (viewMode === 'seller') {
+       return renderGrouped(item => item.sellerName || "未知销售方", <Icons.Store />);
+    }
+
+    if (viewMode === 'type') {
+       return renderGrouped(item => item.invoiceType || "普通发票", <Icons.Tag />);
+    }
+
+    let listToRender = filteredHistory;
+    if (viewMode === 'risk') {
+      listToRender = filteredHistory.filter(h => h.authenticityStatus !== 'pass' || h.complianceStatus !== 'pass');
+      if (listToRender.length === 0) {
+        return <div className="p-8 text-center text-gray-500">🎉 太棒了! 暂无风险发票需要处理。</div>;
+      }
+    }
+
+    if (listToRender.length === 0) {
+        return <div className="p-8 text-center text-gray-500">没有找到符合条件的记录</div>;
+    }
+
+    return (
+       <div className="space-y-4 pb-20">
+         {listToRender.map((item) => (
            <div 
              key={item.id}
              onClick={() => setSelected(item)} 
-             className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
+             className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center"
            >
-              <div className="flex items-center gap-4">
-                 <div className={`p-2 rounded-full ${item.authenticityStatus === 'pass' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                   {item.authenticityStatus === 'pass' ? <Icons.CheckCircle /> : <Icons.AlertTriangle />}
-                 </div>
-                 <div>
-                   <div className="font-bold text-gray-800">{item.sellerName}</div>
-                   <div className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString()}</div>
-                 </div>
-              </div>
-              <div className="text-right">
-                 <div className="font-bold text-blue-600">{item.amount}</div>
-                 <StatusTag label="状态" status={item.authenticityStatus} />
+              {isSelectionMode && (
+                <div className="mr-4" onClick={(e) => toggleSelection(item.id, e)}>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedIds.has(item.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
+                        {selectedIds.has(item.id) && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                </div>
+              )}
+              <div className="flex-1 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                    <div className={`p-2 rounded-full ${item.authenticityStatus === 'pass' && item.complianceStatus === 'pass' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {item.authenticityStatus === 'pass' && item.complianceStatus === 'pass' ? <Icons.CheckCircle /> : <Icons.AlertTriangle />}
+                    </div>
+                    <div>
+                    <div className="font-bold text-gray-800">{item.sellerName}</div>
+                    <div className="text-xs text-gray-500 flex items-center gap-2">
+                        <span className="bg-gray-100 px-1 rounded">{item.invoiceType || '发票'}</span>
+                        <span className="text-gray-400 text-xs">{new Date(item.createdAt).toLocaleString()}</span>
+                    </div>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <div className="font-bold text-blue-600">{item.amount}</div>
+                    {item.reviewStatus ? (
+                        <div className={`flex items-center justify-end gap-2 px-2 py-1 rounded text-xs font-bold ${item.reviewStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            <span>复核</span>
+                            <span>{item.reviewStatus === 'approved' ? '已接受' : '已驳回'}</span>
+                        </div>
+                    ) : (
+                        <StatusTag label="状态" status={item.authenticityStatus === 'pass' && item.complianceStatus === 'pass' ? 'pass' : 'fail'} />
+                    )}
+                </div>
               </div>
            </div>
          ))}
        </div>
-       {selected && <AuditDetailModal result={selected} onClose={() => setSelected(null)} />}
+    );
+  };
+
+  return (
+    <div className="space-y-6 relative h-full flex flex-col">
+       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+         <div className="flex flex-col">
+            <h2 className="text-2xl font-bold text-gray-800">审核记录</h2>
+         </div>
+         <div className="flex gap-2 items-center flex-wrap">
+             <div className="flex gap-1 text-sm bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-[280px] md:max-w-none scrollbar-hide">
+                <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-500'}`}>全部</button>
+                <button onClick={() => setViewMode('risk')} className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${viewMode === 'risk' ? 'bg-white shadow text-red-600 font-bold' : 'text-gray-500'}`}>风险 ({riskCount})</button>
+                <button onClick={() => setViewMode('seller')} className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${viewMode === 'seller' ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-500'}`}>按开票方</button>
+                <button onClick={() => setViewMode('type')} className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${viewMode === 'type' ? 'bg-white shadow text-blue-600 font-bold' : 'text-gray-500'}`}>按类别</button>
+             </div>
+             
+             <button onClick={() => setIsSelectionMode(!isSelectionMode)} className={`p-2 rounded-lg shadow flex items-center gap-1 text-sm font-bold shrink-0 transition-colors ${isSelectionMode ? 'bg-blue-100 text-blue-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                 <Icons.CheckCircle /> <span className="hidden md:inline">{isSelectionMode ? '取消选择' : '选择'}</span>
+             </button>
+
+             <button onClick={exportCSV} className="bg-white text-gray-600 p-2 rounded-lg hover:bg-gray-50 shadow flex items-center gap-1 text-sm font-bold shrink-0">
+                 <Icons.Download /> <span className="hidden md:inline">导出</span>
+             </button>
+         </div>
+       </div>
+
+       {/* Time Filter Bar */}
+       <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200 text-sm overflow-x-auto shrink-0">
+          <span className="font-bold text-gray-600 shrink-0">按时间查询:</span>
+          <input 
+             type="date" 
+             value={startDate} 
+             onChange={(e) => setStartDate(e.target.value)} 
+             className="border border-gray-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          <span className="text-gray-400">-</span>
+          <input 
+             type="date" 
+             value={endDate} 
+             onChange={(e) => setEndDate(e.target.value)} 
+             className="border border-gray-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          {(startDate || endDate) && (
+             <button onClick={() => { setStartDate(''); setEndDate(''); }} className="text-red-500 hover:text-red-700 text-xs shrink-0">
+               清除
+             </button>
+          )}
+       </div>
+
+       {renderContent()}
+
+       {selected && <AuditDetailModal result={selected} onClose={() => setSelected(null)} onUpdate={onUpdate} />}
+       
+       {showReimbursementModal && (
+           <ReimbursementModal selectedItems={getSelectedItems()} onClose={() => setShowReimbursementModal(false)} />
+       )}
+
+       {/* Bottom Selection Bar */}
+       {isSelectionMode && selectedIds.size > 0 && (
+           <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 bg-slate-900 text-white p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] flex justify-between items-center animate-fade-in md:rounded-t-2xl md:mx-4 md:mb-4">
+               <div>
+                   <div className="text-xs text-gray-400">已选择</div>
+                   <div className="font-bold text-lg">{selectedIds.size} 张发票</div>
+               </div>
+               <button 
+                 onClick={() => setShowReimbursementModal(true)}
+                 className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg"
+               >
+                   <Icons.FileText /> 生成报销单
+               </button>
+           </div>
+       )}
     </div>
   );
 };
@@ -698,21 +1083,60 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
   const analyzeBatchRisks = (currentBatch: AuditResult[], allHistory: AuditResult[], config: AuditSettings): BatchReport => {
     const report: BatchReport = {
       totalAmount: 0,
-      invoiceCount: currentBatch.length,
+      invoiceCount: 0,
+      duplicateCount: 0,
+      duplicates: [],
       consecutiveRisks: [],
       largeAmountRisks: [],
       sensitiveAmountRisks: [],
       overallRisk: 'low'
     };
 
-    // Combine for sorting, but only report on current batch risks or links to history
+    // Use a Set to track seen invoice numbers (from history + current batch processing)
+    const seenNumbers = new Set<string>();
+
+    // 1. Load existing history
+    allHistory.forEach(h => {
+        if (h.taxData?.invoiceNumber && h.taxData.invoiceNumber !== 'N/A') {
+            seenNumbers.add(h.taxData.invoiceNumber);
+        }
+    });
+
+    const uniqueBatch: AuditResult[] = [];
+
+    // 2. Process current batch
+    currentBatch.forEach(res => {
+      const num = res.taxData?.invoiceNumber;
+      // We only consider it a "duplicate" if we have a valid invoice number
+      if (num && num !== 'N/A') {
+        if (seenNumbers.has(num)) {
+            // Found duplicate
+            report.duplicateCount++;
+            report.duplicates.push({
+                invoiceNumber: num,
+                amount: res.amount
+            });
+            // Do not add to uniqueBatch, so it's excluded from stats
+        } else {
+            // New unique invoice
+            seenNumbers.add(num);
+            uniqueBatch.push(res);
+        }
+      } else {
+         // If no invoice number, we can't dedup, so we include it in stats
+         uniqueBatch.push(res);
+      }
+    });
+
+    // 3. Stats based on UNIQUE items only
+    report.invoiceCount = uniqueBatch.length;
+
     const historyNums = allHistory.map(h => ({ num: parseInt(h.taxData?.invoiceNumber || '0'), src: 'history' }));
-    const batchNums = currentBatch.map(h => ({ num: parseInt(h.taxData?.invoiceNumber || '0'), src: 'batch', invoiceNumber: h.invoiceNumber }));
+    const batchNums = uniqueBatch.map(h => ({ num: parseInt(h.taxData?.invoiceNumber || '0'), src: 'batch', invoiceNumber: h.invoiceNumber }));
     
-    // Sort
     const allNums = [...historyNums, ...batchNums].filter(x => x.num > 0).sort((a, b) => a.num - b.num);
 
-    currentBatch.forEach(res => {
+    uniqueBatch.forEach(res => {
       const amt = parseFloat(res.amount.replace(/[^0-9.]/g, '')) || 0;
       report.totalAmount += amt;
 
@@ -736,7 +1160,7 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
         }
     }
 
-    if (report.consecutiveRisks.length > 0 || report.largeAmountRisks.length > 0 || report.totalAmount > config.maxBatchAmount) {
+    if (report.consecutiveRisks.length > 0 || report.largeAmountRisks.length > 0 || report.totalAmount > config.maxBatchAmount || report.duplicateCount > 0) {
       report.overallRisk = 'high';
     } else if (report.sensitiveAmountRisks.length > 0) {
       report.overallRisk = 'medium';
@@ -809,10 +1233,11 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
     const visualPrompt = `
       You are an expert tax auditor (税务审核专家). 
       1. Extract the following JSON strictly. 
-      2. Analyze the invoice image/file.
+      2. Analyze the invoice image/file against the provided rules.
       
       JSON Schema:
       {
+        "invoiceType": "string (e.g. 增值税专用发票, 增值税普通发票, 出租车票, 火车票, 定额发票)",
         "sellerName": "string",
         "taxData": {
            "invoiceCode": "string (digits only)",
@@ -828,10 +1253,15 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
         "auditTrail": ["string (in Simplified Chinese)"]
       }
       
-      Important: 
-      - Ensure taxData fields are extracted accurately for government verification.
-      - ALL TEXT output (reasons, auditTrail) MUST BE IN SIMPLIFIED CHINESE.
-      Analyze rules: ${settings.complianceRules}
+      Strictly analyze against these rules:
+      [General Compliance Rules]: ${settings.complianceRules}
+      [Corporate Reimbursement Policy]: ${settings.corporatePolicy ? settings.corporatePolicy : "No specific corporate policy provided."}
+      
+      Important:
+      - CRITICAL: You MUST fail complianceStatus if the invoice contradicts the Corporate Reimbursement Policy.
+      - If the invoice violates the Corporate Policy, complianceStatus must be 'fail'.
+      - Ensure taxData fields are extracted accurately.
+      - ALL TEXT output MUST BE IN SIMPLIFIED CHINESE.
     `;
 
     const txt = await callAI(visualPrompt, rawBase64, mimeType);
@@ -873,6 +1303,7 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
       taxData: data.taxData,
       officialVerifyStatus: agentResult.status,
       agentLogs: agentResult.logs, 
+      invoiceType: data.invoiceType, // Store extracted type
       authenticityStatus: finalAuthStatus as any,
       authenticityReason: finalAuthReason,
       complianceStatus: data.complianceStatus || 'pass',
@@ -923,7 +1354,7 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
                  multiple 
                  accept="image/*,application/pdf" 
                  className="hidden" 
-                 onChange={(e) => { if(e.target.files) handleFiles(e.target.files) }} 
+                 onChange={(e) => { if(e.target.files) handleFiles(Array.from(e.target.files)) }} 
                />
             </label>
           </div>
@@ -991,10 +1422,23 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
                  <div className="flex gap-2 mt-1">
                     {batchReport.consecutiveRisks.length > 0 && <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded">连号 ({batchReport.consecutiveRisks.length})</span>}
                     {batchReport.largeAmountRisks.length > 0 && <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded">大额 ({batchReport.largeAmountRisks.length})</span>}
-                    {batchReport.consecutiveRisks.length === 0 && batchReport.largeAmountRisks.length === 0 && <span className="text-gray-400 text-sm">无明显异常</span>}
+                    {batchReport.consecutiveRisks.length === 0 && batchReport.largeAmountRisks.length === 0 && batchReport.duplicateCount === 0 && <span className="text-gray-400 text-sm">无明显异常</span>}
                  </div>
               </div>
            </div>
+           
+           {/* Duplicate Warning Section */}
+           {batchReport.duplicateCount > 0 && (
+             <div className="p-3 bg-red-50 text-xs text-red-800 border-t border-red-100">
+               <strong>⚠ 发现重复发票 ({batchReport.duplicateCount} 张) - 已剔除统计:</strong>
+               <ul className="list-disc pl-5 mt-1 space-y-1">
+                 {batchReport.duplicates.map((d, i) => (
+                   <li key={i}>号码: {d.invoiceNumber} | 金额: {d.amount}</li>
+                 ))}
+               </ul>
+             </div>
+           )}
+
            {batchReport.consecutiveRisks.length > 0 && (
              <div className="p-3 bg-red-50 text-xs text-red-800 border-t border-red-100">
                <strong>连号预警 (疑似拆单):</strong> {batchReport.consecutiveRisks.join(', ')}
@@ -1067,7 +1511,7 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
 
       {/* Detail Modal */}
       {selectedResult && (
-        <AuditDetailModal result={selectedResult} onClose={() => setSelectedResult(null)} />
+        <AuditDetailModal result={selectedResult} onClose={() => setSelectedResult(null)} onUpdate={onSave} />
       )}
       
       {/* Camera Modal (FAB Version) */}
@@ -1117,9 +1561,18 @@ const App = () => {
   };
 
   const handleSaveResult = (res: AuditResult) => {
-    const newHistory = [res, ...history];
-    setHistory(newHistory);
-    localStorage.setItem('audit_history', JSON.stringify(newHistory));
+    setHistory(prev => {
+        // If result exists (update), replace it. If new (add), prepend it.
+        const exists = prev.find(p => p.id === res.id);
+        let newHistory;
+        if (exists) {
+            newHistory = prev.map(p => p.id === res.id ? res : p);
+        } else {
+            newHistory = [res, ...prev];
+        }
+        localStorage.setItem('audit_history', JSON.stringify(newHistory));
+        return newHistory;
+    });
   };
 
   const handleSaveSettings = (s: AuditSettings) => {
@@ -1189,7 +1642,7 @@ const App = () => {
          <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
             <div className="max-w-5xl mx-auto h-full">
               {activeTab === 'audit' && <AuditView onSave={handleSaveResult} settings={settings} history={history} user={user} />}
-              {activeTab === 'history' && <HistoryView history={history} />}
+              {activeTab === 'history' && <HistoryView history={history} onUpdate={handleSaveResult} />}
               {activeTab === 'settings' && <SettingsView settings={settings} onSave={handleSaveSettings} />}
             </div>
          </div>
