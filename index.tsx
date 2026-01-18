@@ -1248,55 +1248,49 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
 
   const runShellAuditSimulation = async (sellerName: string, rules: string): Promise<{status: 'pass'|'fail'|'warning', logs: string[]}> => {
     const logs: string[] = [];
-    const steps = [
-      { msg: `🔍 启动虚开发票审核专项Agent...`, delay: 500 },
-      { msg: `🌐 正在检索工商登记信息系统 (GSXT)...`, delay: 800 },
-      { msg: `🏢 目标企业: ${sellerName || '未知销售方'}`, delay: 400 },
-    ];
-
-    for (const step of steps) {
-      await new Promise(r => setTimeout(r, step.delay));
-      logs.push(step.msg);
-    }
+    logs.push(`🔍 启动虚开发票审核专项Agent...`);
+    logs.push(`🌐 正在检索工商登记信息及公开信用数据: ${sellerName}`);
 
     if (!sellerName || sellerName === "Unknown" || sellerName === "Parse Error") {
-      logs.push("❌ 错误: 无法确定销售方名称，取消工商信息检索");
+      logs.push("❌ 错误: 无法确定销售方名称，取消风险核查");
       return { status: 'warning', logs };
     }
 
-    // Simulate GSXT Data Retrieval
-    await new Promise(r => setTimeout(r, 1000));
-    logs.push(`✅ 已获取 [${sellerName}] 工商登记数据:`);
+    const searchPrompt = `
+      You are a corporate risk investigator.
+      Task: Perform a background check on the company: "${sellerName}".
+      Rules to check: ${rules}
 
-    // Logic based on simulation (we can make it random or semi-realistic)
-    // For now, let's pretend we always "find" some info but check rules
-    const isRecentlyEstablished = Math.random() < 0.2; // 20% chance of being new
-    const addrIsVirtual = Math.random() < 0.1; // 10% chance of virtual address
+      Requirements:
+      1. Use your internal knowledge and logic to identify if this company has signs of being a "shell company" (空壳公司) or "fictitious" (虚开).
+      2. If you don't have Real-time GSXT data, look for general public records or patterns.
+      3. CRITICAL: DO NOT FABRICATE DATA (e.g., specific dates or addresses) IF YOU ARE NOT SURE.
+      4. If data is unavailable, state "[无法通过公开渠道获取实时工商数据]" and analyze based on the provided company name and common fraud patterns.
+      5. Output format:
+         - Status: pass | fail | warning
+         - Reason: brief explanation in Simplified Chinese
+         - Details: 2-3 log entries about established date, scale, or status (be honest if unknown)
+    `;
 
-    if (isRecentlyEstablished) {
-       logs.push(`⚠️ 发现异常: 企业成立日期为 2025-08-15 (不足6个月)`);
-    } else {
-       logs.push(`ℹ️ 企业成立日期: 2020-05-20 (存续状态正常)`);
+    try {
+      const gptResponse = await callAI(searchPrompt, null);
+
+      if (gptResponse.includes('Status: pass')) {
+        logs.push(`✅ 工商信息分析: 未发现明显风险`);
+        return { status: 'pass', logs };
+      } else if (gptResponse.includes('Status: fail')) {
+        logs.push(`❌ 风险警报: 发现严重虚开特征`);
+        logs.push(gptResponse.split('\n').filter(l => l.includes('Reason:') || l.includes('Details:')).join(' '));
+        return { status: 'fail', logs };
+      } else {
+        logs.push(`⚠️ 风险提示: 数据不全或存在潜在风险`);
+        logs.push(gptResponse.split('\n').filter(l => l.includes('Reason:') || l.includes('Details:')).join(' '));
+        return { status: 'warning', logs };
+      }
+    } catch (e) {
+      logs.push(`⚠️ 检索失败: 无法连接至风险核查服务`);
+      return { status: 'warning', logs };
     }
-
-    if (addrIsVirtual) {
-       logs.push(`⚠️ 发现异常: 注册地址包含 "集群注册" 标识`);
-    } else {
-       logs.push(`ℹ️ 注册地址: 经校验为实体办公地址`);
-    }
-
-    logs.push(`📝 正在根据判定标准进行匹配...`);
-    await new Promise(r => setTimeout(r, 600));
-
-    let status: 'pass' | 'fail' | 'warning' = 'pass';
-    if (isRecentlyEstablished || addrIsVirtual) {
-       status = 'warning';
-       logs.push(`🚩 判定结果: 触发预警。匹配规则: ${isRecentlyEstablished ? '成立不足6个月' : ''} ${addrIsVirtual ? '虚拟/集群地址' : ''}`);
-    } else {
-       logs.push(`✔ 判定结果: 未发现明显虚开特征`);
-    }
-
-    return { status, logs };
   };
 
   const runSingleAudit = async (base64: string, type: 'pdf' | 'image', fileName: string): Promise<AuditResult> => {
@@ -1340,6 +1334,8 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
       [Corporate Reimbursement Policy]: ${settings.corporatePolicy ? settings.corporatePolicy : "No specific corporate policy provided."}
 
       Important:
+      - TRUTH-ONLY: DO NOT FABRICATE audit results or company data. If you cannot extract a field, use "N/A".
+      - GSXT/SEARCH: If you cannot find official data via GSXT for shellRiskStatus, search public/open information. If both fail, explicitly state "Data unavailable, manual check required" instead of guessing.
       - CRITICAL: You MUST fail complianceStatus if the invoice contradicts the Corporate Reimbursement Policy.
       - CRITICAL: You MUST evaluate shellRiskStatus based on the [Shell/Fictitious Invoice Risk Rules]. Use 'warning' or 'fail' if suspicious.
       - If the invoice violates the Corporate Policy, complianceStatus must be 'fail'.
