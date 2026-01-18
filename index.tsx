@@ -892,7 +892,7 @@ const SettingsView = ({ settings, onSave }: { settings: AuditSettings, onSave: (
               onChange={(e) => handleChange('aiProvider', e.target.value as any)}
               className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
             >
-              <option value="gemini">Google Gemini (云端/推荐)</option>
+              <option value="gemini">Google Gemini (云端)</option>
               <option value="custom">Custom / Local LLM (本地/隐私)</option>
             </select>
           </div>
@@ -1005,8 +1005,8 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
   // --- Core Analysis Logic ---
   const callAI = async (prompt: string, imageBase64: string | null, mimeType: string = 'image/jpeg'): Promise<string> => {
     if (settings.aiProvider === 'gemini') {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const model = 'gemini-3-flash-preview';
+      const ai = new GoogleGenAI({ apiKey: process.env.VITE_API_KEY });
+      const model = 'gemini-2.5-flash';
       const contents: any = { parts: [] };
       if (imageBase64) contents.parts.push({ inlineData: { mimeType, data: imageBase64 } });
       contents.parts.push({ text: prompt });
