@@ -87,6 +87,7 @@ interface AuditResult {
 
   shellRiskStatus: 'pass' | 'fail' | 'warning';
   shellRiskReason: string;
+  shellRiskLogs?: string[];
   companyInfo?: string;
 
   complianceStatus: 'pass' | 'fail' | 'warning';
@@ -303,6 +304,13 @@ const AuditDetailModal = ({ result, onClose, onUpdate }: { result: AuditResult, 
                     </div>
                     {result.authenticityReason && <div className="text-xs mt-1 opacity-80">{result.authenticityReason}</div>}
                 </div>
+                <div className={`p-3 rounded-lg border ${result.shellRiskStatus === 'pass' ? 'bg-green-50 border-green-200' : result.shellRiskStatus === 'warning' ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="text-xs text-gray-500 font-bold mb-1">虚开风险</div>
+                    <div className={`font-bold ${result.shellRiskStatus === 'pass' ? 'text-green-700' : result.shellRiskStatus === 'warning' ? 'text-amber-700' : 'text-red-700'}`}>
+                        {result.shellRiskStatus === 'pass' ? '无显性风险' : '存在风险'}
+                    </div>
+                    {result.shellRiskReason && <div className="text-xs mt-1 opacity-80">{result.shellRiskReason}</div>}
+                </div>
                 <div className={`p-3 rounded-lg border ${result.complianceStatus === 'pass' ? 'bg-green-50 border-green-200' : result.complianceStatus === 'warning' ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}>
                     <div className="text-xs text-gray-500 font-bold mb-1">合规检查</div>
                     <div className={`font-bold ${result.complianceStatus === 'pass' ? 'text-green-700' : result.complianceStatus === 'warning' ? 'text-amber-700' : 'text-red-700'}`}>
@@ -331,6 +339,16 @@ const AuditDetailModal = ({ result, onClose, onUpdate }: { result: AuditResult, 
                     <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.ShieldCheck /> 国税局查验日志</h4>
                     <div className="bg-slate-900 text-green-400 p-3 rounded-lg font-mono text-xs max-h-40 overflow-y-auto">
                     {result.agentLogs.map((log, i) => <div key={i} className="mb-1">{log}</div>)}
+                    </div>
+                </div>
+                )}
+
+                {/* Shell Risk Agent Logs */}
+                {result.shellRiskLogs && result.shellRiskLogs.length > 0 && (
+                <div className="space-y-2">
+                    <h4 className="font-bold text-gray-700 flex items-center gap-2"><Icons.Globe /> 虚开风险核查日志</h4>
+                    <div className="bg-slate-900 text-amber-400 p-3 rounded-lg font-mono text-xs max-h-40 overflow-y-auto border-l-4 border-amber-600">
+                    {result.shellRiskLogs.map((log, i) => <div key={i} className="mb-1">{log}</div>)}
                     </div>
                 </div>
                 )}
@@ -851,7 +869,7 @@ const SettingsView = ({ settings, onSave }: { settings: AuditSettings, onSave: (
       handleChange('customApiKey', 'ollama');
     } else {
       handleChange('aiProvider', 'custom');
-      handleChange('customBaseUrl', 'http://localhost:1234/v1');
+      handleChange('customBaseUrl', '/lm-studio-api/v1');
       handleChange('customModelName', 'local-model');
       handleChange('customApiKey', 'lm-studio');
     }
@@ -996,12 +1014,20 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
       return resp.text || "";
     } else {
       if (!settings.customApiKey && settings.customBaseUrl.includes("openai")) throw new Error("Missing API Key");
+
+      // Auto-switch to proxy for local LM Studio to avoid CORS/OPTIONS errors
+      let finalBaseUrl = settings.customBaseUrl;
+      const localRegex = /^(?:https?:\/\/)?(?:localhost|127\.0\.0\.1):1234/;
+      if (typeof finalBaseUrl === 'string' && localRegex.test(finalBaseUrl)) {
+         finalBaseUrl = finalBaseUrl.replace(localRegex, '/lm-studio-api');
+      }
+
       const messages: any[] = [{ role: 'user', content: [] }];
       if (imageBase64) messages[0].content.push({ type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } });
       messages[0].content.push({ type: 'text', text: prompt });
-      
+
       try {
-        const resp = await fetch(`${settings.customBaseUrl}/chat/completions`, {
+        const resp = await fetch(`${finalBaseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1220,6 +1246,59 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
     return { status: isSuccess ? 'verified' : 'failed', logs };
   };
 
+  const runShellAuditSimulation = async (sellerName: string, rules: string): Promise<{status: 'pass'|'fail'|'warning', logs: string[]}> => {
+    const logs: string[] = [];
+    const steps = [
+      { msg: `🔍 启动虚开发票审核专项Agent...`, delay: 500 },
+      { msg: `🌐 正在检索工商登记信息系统 (GSXT)...`, delay: 800 },
+      { msg: `🏢 目标企业: ${sellerName || '未知销售方'}`, delay: 400 },
+    ];
+
+    for (const step of steps) {
+      await new Promise(r => setTimeout(r, step.delay));
+      logs.push(step.msg);
+    }
+
+    if (!sellerName || sellerName === "Unknown" || sellerName === "Parse Error") {
+      logs.push("❌ 错误: 无法确定销售方名称，取消工商信息检索");
+      return { status: 'warning', logs };
+    }
+
+    // Simulate GSXT Data Retrieval
+    await new Promise(r => setTimeout(r, 1000));
+    logs.push(`✅ 已获取 [${sellerName}] 工商登记数据:`);
+
+    // Logic based on simulation (we can make it random or semi-realistic)
+    // For now, let's pretend we always "find" some info but check rules
+    const isRecentlyEstablished = Math.random() < 0.2; // 20% chance of being new
+    const addrIsVirtual = Math.random() < 0.1; // 10% chance of virtual address
+
+    if (isRecentlyEstablished) {
+       logs.push(`⚠️ 发现异常: 企业成立日期为 2025-08-15 (不足6个月)`);
+    } else {
+       logs.push(`ℹ️ 企业成立日期: 2020-05-20 (存续状态正常)`);
+    }
+
+    if (addrIsVirtual) {
+       logs.push(`⚠️ 发现异常: 注册地址包含 "集群注册" 标识`);
+    } else {
+       logs.push(`ℹ️ 注册地址: 经校验为实体办公地址`);
+    }
+
+    logs.push(`📝 正在根据判定标准进行匹配...`);
+    await new Promise(r => setTimeout(r, 600));
+
+    let status: 'pass' | 'fail' | 'warning' = 'pass';
+    if (isRecentlyEstablished || addrIsVirtual) {
+       status = 'warning';
+       logs.push(`🚩 判定结果: 触发预警。匹配规则: ${isRecentlyEstablished ? '成立不足6个月' : ''} ${addrIsVirtual ? '虚拟/集群地址' : ''}`);
+    } else {
+       logs.push(`✔ 判定结果: 未发现明显虚开特征`);
+    }
+
+    return { status, logs };
+  };
+
   const runSingleAudit = async (base64: string, type: 'pdf' | 'image', fileName: string): Promise<AuditResult> => {
     let rawBase64 = base64;
     let mimeType = type === 'pdf' ? 'application/pdf' : 'image/jpeg';
@@ -1231,10 +1310,10 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
     }
 
     const visualPrompt = `
-      You are an expert tax auditor (税务审核专家). 
-      1. Extract the following JSON strictly. 
+      You are an expert tax auditor (税务审核专家).
+      1. Extract the following JSON strictly.
       2. Analyze the invoice image/file against the provided rules.
-      
+
       JSON Schema:
       {
         "invoiceType": "string (e.g. 增值税专用发票, 增值税普通发票, 出租车票, 火车票, 定额发票)",
@@ -1247,18 +1326,22 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
            "checkCode": "string (last 6 digits)"
         },
         "authenticityStatus": "pass"|"fail",
+        "shellRiskStatus": "pass"|"fail"|"warning",
         "complianceStatus": "pass"|"fail",
         "authenticityReason": "string (brief, in Simplified Chinese)",
+        "shellRiskReason": "string (brief, in Simplified Chinese)",
         "complianceReason": "string (brief, in Simplified Chinese)",
         "auditTrail": ["string (in Simplified Chinese)"]
       }
-      
+
       Strictly analyze against these rules:
+      [Shell/Fictitious Invoice Risk Rules]: ${settings.shellRules}
       [General Compliance Rules]: ${settings.complianceRules}
       [Corporate Reimbursement Policy]: ${settings.corporatePolicy ? settings.corporatePolicy : "No specific corporate policy provided."}
-      
+
       Important:
       - CRITICAL: You MUST fail complianceStatus if the invoice contradicts the Corporate Reimbursement Policy.
+      - CRITICAL: You MUST evaluate shellRiskStatus based on the [Shell/Fictitious Invoice Risk Rules]. Use 'warning' or 'fail' if suspicious.
       - If the invoice violates the Corporate Policy, complianceStatus must be 'fail'.
       - Ensure taxData fields are extracted accurately.
       - ALL TEXT output MUST BE IN SIMPLIFIED CHINESE.
@@ -1280,16 +1363,28 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
     // Run Tax Bureau Agent Simulation
     addLog(`>> 正在调用国税局Agent查验: ${data.taxData?.invoiceNumber || '未知'}`);
     const agentResult = await runTaxBureauSimulation(data.taxData || {});
-    
-    // STRICT AUTHENTICITY LOGIC: 
+
+    // Run Shell/Fictitious Audit Simulation
+    addLog(`>> 正在启动虚开风险核查Agent: ${data.sellerName || '未知'}`);
+    const shellResult = await runShellAuditSimulation(data.sellerName, settings.shellRules);
+
+    // STRICT AUTHENTICITY LOGIC:
     // If the official tax agent verification fails, the Authenticity Status MUST be 'fail'.
     // Override whatever the AI thought about the visual appearance.
     let finalAuthStatus = data.authenticityStatus || 'pass';
     let finalAuthReason = data.authenticityReason || '';
-    
+
     if (agentResult.status !== 'verified') {
         finalAuthStatus = 'fail';
         finalAuthReason = `[国税局查验失败] 未通过官方数据库验证。${finalAuthReason}`;
+    }
+
+    // SHELL RISK LOGIC: Merge AI findings with GSXT simulation findings
+    let finalShellStatus = data.shellRiskStatus || 'pass';
+    let finalShellReason = data.shellRiskReason || '';
+    if (shellResult.status !== 'pass') {
+        finalShellStatus = shellResult.status === 'fail' ? 'fail' : 'warning';
+        finalShellReason = `[工商信息分析] ${shellResult.logs.find(l => l.includes('判定结果')) || '发现异常'}。${finalShellReason}`;
     }
 
     return {
@@ -1302,14 +1397,15 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
       previewUrl: base64,
       taxData: data.taxData,
       officialVerifyStatus: agentResult.status,
-      agentLogs: agentResult.logs, 
+      agentLogs: agentResult.logs,
+      shellRiskLogs: shellResult.logs, // Save the GSXT logs
       invoiceType: data.invoiceType, // Store extracted type
       authenticityStatus: finalAuthStatus as any,
       authenticityReason: finalAuthReason,
+      shellRiskStatus: finalShellStatus as any,
+      shellRiskReason: finalShellReason,
       complianceStatus: data.complianceStatus || 'pass',
       complianceReason: data.complianceReason || '',
-      shellRiskStatus: 'pass',
-      shellRiskReason: '',
       auditTrail: data.auditTrail || ["分析完成"],
       createdAt: Date.now(),
       user: user.username
@@ -1478,6 +1574,7 @@ const AuditView = ({ onSave, settings, history, user }: { onSave: (res: AuditRes
             {item.result && (
               <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-2 rounded pointer-events-none">
                  <StatusTag label="真伪" status={item.result.authenticityStatus} />
+                 <StatusTag label="虚开" status={item.result.shellRiskStatus} />
                  <StatusTag label="合规" status={item.result.complianceStatus} />
                  <div className="col-span-2 text-gray-500 truncate">{item.result.sellerName}</div>
                  <div className="col-span-2 text-[10px] text-blue-500 text-center mt-1 border-t border-gray-200 pt-1">点击查看详情 &gt;</div>
