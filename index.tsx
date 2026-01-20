@@ -575,7 +575,12 @@ const LoginView = ({ onLogin }: { onLogin: (u: User) => void }) => {
   );
 };
 
-const HistoryView = ({ history, onUpdate }: { history: AuditResult[], onUpdate: (r: AuditResult) => void }) => {
+const HistoryView = ({ history, onUpdate, onClear, onDelete }: {
+  history: AuditResult[],
+  onUpdate: (r: AuditResult) => void,
+  onClear: () => void,
+  onDelete: (ids: string[]) => void
+}) => {
   const [selected, setSelected] = useState<AuditResult | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'seller' | 'risk' | 'type'>('list');
   const [startDate, setStartDate] = useState('');
@@ -804,6 +809,10 @@ const HistoryView = ({ history, onUpdate }: { history: AuditResult[], onUpdate: 
                  <Icons.CheckCircle /> <span className="hidden md:inline">{isSelectionMode ? '取消选择' : '选择'}</span>
              </button>
 
+             <button onClick={onClear} className="bg-white text-red-600 p-2 rounded-lg hover:bg-red-50 shadow flex items-center gap-1 text-sm font-bold shrink-0">
+                 <Icons.Trash /> <span className="hidden md:inline">清空</span>
+             </button>
+
              <button onClick={exportCSV} className="bg-white text-gray-600 p-2 rounded-lg hover:bg-gray-50 shadow flex items-center gap-1 text-sm font-bold shrink-0">
                  <Icons.Download /> <span className="hidden md:inline">导出</span>
              </button>
@@ -848,12 +857,26 @@ const HistoryView = ({ history, onUpdate }: { history: AuditResult[], onUpdate: 
                    <div className="text-xs text-gray-400">已选择</div>
                    <div className="font-bold text-lg">{selectedIds.size} 张发票</div>
                </div>
-               <button 
-                 onClick={() => setShowReimbursementModal(true)}
-                 className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg"
-               >
-                   <Icons.FileText /> 生成报销单
-               </button>
+               <div className="flex gap-2">
+                   <button
+                     onClick={() => {
+                        if (window.confirm(`确定要删除选中的 ${selectedIds.size} 条记录吗？`)) {
+                            onDelete(Array.from(selectedIds));
+                            setSelectedIds(new Set());
+                            setIsSelectionMode(false);
+                        }
+                     }}
+                     className="bg-red-600 hover:bg-red-500 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg"
+                   >
+                       <Icons.Trash /> 删除所选
+                   </button>
+                   <button
+                     onClick={() => setShowReimbursementModal(true)}
+                     className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg"
+                   >
+                       <Icons.FileText /> 生成报销单
+                   </button>
+               </div>
            </div>
        )}
     </div>
@@ -1676,6 +1699,21 @@ const App = () => {
     localStorage.setItem('audit_settings', JSON.stringify(s));
   };
 
+  const handleClearHistory = () => {
+    if (window.confirm('确定要清空所有审核记录吗？此操作不可恢复。')) {
+      setHistory([]);
+      localStorage.setItem('audit_history', JSON.stringify([]));
+    }
+  };
+
+  const handleDeleteRecords = (ids: string[]) => {
+    setHistory(prev => {
+        const newHistory = prev.filter(p => !ids.includes(p.id));
+        localStorage.setItem('audit_history', JSON.stringify(newHistory));
+        return newHistory;
+    });
+  };
+
   if (!user) {
     return <LoginView onLogin={handleLogin} />;
   }
@@ -1738,7 +1776,7 @@ const App = () => {
          <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
             <div className="max-w-5xl mx-auto h-full">
               {activeTab === 'audit' && <AuditView onSave={handleSaveResult} settings={settings} history={history} user={user} />}
-              {activeTab === 'history' && <HistoryView history={history} onUpdate={handleSaveResult} />}
+              {activeTab === 'history' && <HistoryView history={history} onUpdate={handleSaveResult} onClear={handleClearHistory} onDelete={handleDeleteRecords} />}
               {activeTab === 'settings' && <SettingsView settings={settings} onSave={handleSaveSettings} />}
               <footer className="mt-8 pt-8 border-t border-gray-200 text-center text-gray-400 text-xs pb-4">
                 <p>著作权归“刑科税律”所有，不得用于商业目的</p>
