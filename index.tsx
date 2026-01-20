@@ -1,3 +1,6 @@
+/**
+ * 著作权归“刑科税律”所有，不得用于商业目的
+ */
 import React, { useState, useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -1737,6 +1740,9 @@ const App = () => {
               {activeTab === 'audit' && <AuditView onSave={handleSaveResult} settings={settings} history={history} user={user} />}
               {activeTab === 'history' && <HistoryView history={history} onUpdate={handleSaveResult} />}
               {activeTab === 'settings' && <SettingsView settings={settings} onSave={handleSaveSettings} />}
+              <footer className="mt-8 pt-8 border-t border-gray-200 text-center text-gray-400 text-xs pb-4">
+                <p>著作权归“刑科税律”所有，不得用于商业目的</p>
+              </footer>
             </div>
          </div>
 

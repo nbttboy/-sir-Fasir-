@@ -19,9 +19,32 @@
 
 ## 🚀 快速开始
 
-### 网页版部署
-本项目为纯前端 React 应用，可通过静态服务器（Nginx, Caddy）或云静态托管（Cloudflare Pages, Vercel）一键部署。
-> **注意**: 构建时需要在 Cloudflare 或构建环境中配置 `VITE_API_KEY`（如使用 Gemini）以启用云端 AI 辅助。
+### 本地开发运行
+1. **克隆仓库**
+   ```bash
+   git clone https://github.com/nbttboy/-sir-Fasir-
+   cd sir-Fasir
+   ```
+
+2. **安装依赖**
+   ```bash
+   npm install
+   ```
+
+3. **配置环境变量**
+   在项目根目录创建 `.env` 文件，并配置您的 API Key（如果使用 Google Gemini）：
+   ```env
+   VITE_API_KEY=您的_GEMINI_API_KEY
+   ```
+或者直接在系统配置界面填写
+
+4. **启动开发服务器**
+   ```bash
+   npm run dev
+   ```
+   启动后，在浏览器访问 `http://localhost:3000`。
+
+
 
 ### 移动端集成 (PWA)
 应用完全支持 PWA。在移动浏览器中打开后，点击“添加到主屏幕”，即可像原生 App 一样享受流畅的拍照报销体验。
@@ -33,3 +56,6 @@
 
 ---
 **发票sir**：让报销合规变得像扫码一样简单。
+
+**著作权声明：**
+本项目著作权归“刑科税律”所有，不得用于商业目的。
